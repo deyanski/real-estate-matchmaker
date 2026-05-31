@@ -532,6 +532,20 @@ img {
   line-height: 1.6;
 }
 
+.property-link {
+  display: inline-flex;
+  margin-top: 6px;
+  color: var(--accent-2);
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.property-link:hover {
+  color: var(--text);
+}
+
 .price {
   color: var(--accent-2);
   font-weight: 700;
@@ -626,6 +640,17 @@ img {
 .result-list {
   display: grid;
   gap: 12px;
+}
+
+.result-list--numbered {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: property-counter;
+}
+
+.result-list--numbered .message-card {
+  counter-increment: property-counter;
 }
 
 .result-card {

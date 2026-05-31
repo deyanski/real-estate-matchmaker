@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import type {
@@ -211,19 +211,25 @@ function ChatBubble({ message }: { message: MessageItem }) {
       </div>
       <p className="chat-text">{message.text}</p>
       {message.matchedProperties && message.matchedProperties.length > 0 ? (
-        <div className="result-list">
-          {message.matchedProperties.map((property) => (
-            <div className="message-card" key={`${message.id}-${property.id}`}>
+        <ol className="result-list result-list--numbered">
+          {message.matchedProperties.map((property, index) => (
+            <li className="message-card" key={`${message.id}-${property.id}`}>
               <div className="property-title-row">
-                <strong>{property.title}</strong>
-                <span className="result-score">score {property.score.toFixed(1)}</span>
+                <strong>{index + 1}. {property.title}</strong>
+                <span className="result-score">score {property.score.toFixed(2)}</span>
               </div>
               <p className="property-meta">
                 {property.location} · {property.property_type} · {property.listing_type} · {formatEUR(property.price)}
               </p>
-            </div>
+              <p className="property-meta">{property.description}</p>
+              {property.image_url ? (
+                <a className="property-link" href={property.image_url} target="_blank" rel="noreferrer noopener">
+                  Open image URL
+                </a>
+              ) : null}
+            </li>
           ))}
-        </div>
+        </ol>
       ) : null}
     </article>
   );
@@ -271,18 +277,6 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
   const showBroker = mode !== 'buyer';
   const showBuyer = mode !== 'broker';
   const activeUserId = brokerIdentifier || sessionId;
-  const dashboardStats = useMemo(() => {
-    const saleCount = properties.filter((property) => property.listing_type === 'for_sale').length;
-    const rentCount = properties.filter((property) => property.listing_type === 'for_rent').length;
-    return {
-      total: properties.length,
-      saleCount,
-      rentCount,
-      averagePrice: properties.length
-        ? properties.reduce((sum, property) => sum + property.price, 0) / properties.length
-        : 0
-    };
-  }, [properties]);
 
   useEffect(() => {
     if (!listingFile) {
@@ -488,38 +482,13 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
 
   return (
     <main className="shell">
-      <section className="hero">
-        <div className="hero-grid">
-          <div>
-            {mode !== 'all' ? (
-              <p style={{ margin: '0 0 12px' }}>
-                <Link className="button button-secondary" href="/">
-                  Back to landing
-                </Link>
-              </p>
-            ) : null}
-            <p className="hero-kicker">NovaDom Realty // semantic workflow</p>
-            <h1 className="hero-title">A brokerage cockpit that feels like a magazine spread.</h1>
-            <p className="hero-text">
-              This Next.js front end is wired for two webhook contracts only: broker listing creation and embedded chat.
-              The broker path is gated by a seeded broker ID; buyer chat stays role-tagged and search-focused.
-            </p>
-            <div className="hero-badges">
-              <span className="chip"><strong>{dashboardStats.total}</strong> active listings</span>
-              <span className="chip"><strong>{dashboardStats.saleCount}</strong> for sale</span>
-              <span className="chip"><strong>{dashboardStats.rentCount}</strong> for rent</span>
-              <span className="chip"><strong>{formatEUR(dashboardStats.averagePrice)}</strong> mean asking price</span>
-            </div>
-            {initialError ? (
-              <div className="empty-state" style={{ marginTop: 18 }}>
-                {initialError}
-              </div>
-            ) : null}
-          </div>
-          <div className="hero-side">
-          </div>
-        </div>
-      </section>
+      {mode !== 'all' ? (
+        <p style={{ margin: '0 0 12px' }}>
+          <Link className="button button-secondary" href="/">
+            Back to landing
+          </Link>
+        </p>
+      ) : null}
 
       <section className={`workspace ${mode !== 'all' ? 'is-single' : ''}`}>
         {showBroker ? <article className="panel is-broker">
@@ -771,7 +740,7 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
               <button className="button" type="button" disabled={buyerBusy} onClick={() => submitChat('client', buyerQuery, setBuyerMessages, 'buyer_search')}>
                 {buyerBusy ? 'Searching...' : 'Send buyer message'}
               </button>
-              <p className="help-text">Search results are ranked by meaning in the mocked route and can be replaced by the n8n semantic workflow later.</p>
+              <p className="help-text">Search results are returned by the n8n semantic workflow and displayed here in ranked order.</p>
             </div>
           </div>
 
