@@ -411,6 +411,18 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
       return;
     }
 
+    const title = normalizeText(listingDraft.title);
+    const location = normalizeText(listingDraft.location);
+    const description = normalizeText(listingDraft.description);
+    const listingType = listingDraft.listing_type;
+    const propertyType = listingDraft.property_type;
+
+    if (!title || !location || !description || !listingType || !propertyType) {
+      setListingStatus('error');
+      setListingMessage('All listing fields are required. Fill in title, listing type, property type, location, price, description, and image.');
+      return;
+    }
+
     if (!listingFile) {
       setListingStatus('error');
       setListingMessage('Please choose an image for the listing.');
@@ -440,13 +452,13 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
         role: 'broker',
         broker_id: brokerIdentifier,
         property: {
-          title: normalizeText(listingDraft.title),
-          property_type: listingDraft.property_type,
-          listing_type: listingDraft.listing_type,
-          location: normalizeText(listingDraft.location),
+          title,
+          property_type: propertyType,
+          listing_type: listingType,
+          location,
           price: priceValue,
           currency: 'EUR',
-          description: normalizeText(listingDraft.description)
+          description
         },
         image: {
           filename: optimizedImage.name,
@@ -644,6 +656,7 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
                 value={brokerId}
                 onChange={(event) => setBrokerId(event.target.value)}
                 placeholder="BRK-001"
+                required
               />
             </div>
 
@@ -658,6 +671,7 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
                   value={listingDraft.title}
                   onChange={(event) => setListingDraft((current) => ({ ...current, title: event.target.value }))}
                   placeholder="Sunlit two-bedroom apartment"
+                  required
                 />
               </div>
               <div className="field">
@@ -671,6 +685,8 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
                   value={listingDraft.price}
                   onChange={(event) => setListingDraft((current) => ({ ...current, price: event.target.value }))}
                   placeholder="189000"
+                  required
+                  min={1}
                 />
               </div>
             </div>
@@ -685,6 +701,7 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
                   className="field-select"
                   value={listingDraft.listing_type}
                   onChange={(event) => setListingDraft((current) => ({ ...current, listing_type: event.target.value as ListingType }))}
+                  required
                 >
                   {listingTypeOptions.map((option) => (
                     <option key={option} value={option}>
@@ -702,6 +719,7 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
                   className="field-select"
                   value={listingDraft.property_type}
                   onChange={(event) => setListingDraft((current) => ({ ...current, property_type: event.target.value as PropertyType }))}
+                  required
                 >
                   {propertyTypeOptions.map((option) => (
                     <option key={option} value={option}>
@@ -723,6 +741,7 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
                   value={listingDraft.location}
                   onChange={(event) => setListingDraft((current) => ({ ...current, location: event.target.value }))}
                   placeholder="Lozenets, Sofia"
+                  required
                 />
               </div>
               <div className="field">
@@ -735,6 +754,7 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/gif"
                   onChange={(event) => setListingFile(event.target.files?.[0] ?? null)}
+                  required
                 />
               </div>
             </div>
@@ -749,6 +769,7 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
                 value={listingDraft.description}
                 onChange={(event) => setListingDraft((current) => ({ ...current, description: event.target.value }))}
                 placeholder="Bright, renovated, balcony, close to metro..."
+                required
               />
             </div>
 
