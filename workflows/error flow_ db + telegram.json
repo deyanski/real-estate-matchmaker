@@ -1,0 +1,190 @@
+{
+  "name": "error flow: db + telegram",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        16
+      ],
+      "id": "00d28a61-9646-4bc7-8fc7-c8a59afe7efd",
+      "name": "Error Trigger",
+      "executeOnce": false
+    },
+    {
+      "parameters": {
+        "chatId": "8365620147",
+        "text": "=Error Level: {{ $json.execution.error.level }}\nWorkflow Name: {{ $json.workflow.name }}\nNode Name: {{ $json.execution.error.node.name }}\nExecution URL: {{ $json.execution.url }}\n",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        80,
+        -64
+      ],
+      "id": "fc2871f0-e113-4c43-91d4-04ea048ca3fa",
+      "name": "Send a text message",
+      "webhookId": "28c55727-780c-4525-b006-97fb98f88a5b",
+      "executeOnce": true,
+      "credentials": {
+        "telegramApi": {
+          "id": "n43YyVVBZDDnVZPH",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "error_log",
+          "mode": "list",
+          "cachedResultName": "error_log"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": 0,
+            "error_level": "={{ $json.execution.error.level }}",
+            "workflow_name": "={{ $json.workflow.name }}",
+            "node_name": "={{ $json.execution.error.node.name }}",
+            "execution_url": "={{ $json.execution.url }}",
+            "error_message": "={{ $json.execution.error.message }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "execution_url",
+              "displayName": "execution_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_message",
+              "displayName": "error_message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "node_name",
+              "displayName": "node_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "workflow_name",
+              "displayName": "workflow_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "error_level",
+              "displayName": "error_level",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "skipOnConflict": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        80,
+        96
+      ],
+      "id": "f076c94c-be7b-4d5c-bbdf-244acc2879e3",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "2265627b-4d36-46a1-bbc3-e936221d75ad",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0ddff7d21d0db94379d34b90ad9adbdbeeffaf85881bffb7496b19ad7281bf65"
+  },
+  "id": "G0sjM3eBbk0u7j4t",
+  "tags": []
+}

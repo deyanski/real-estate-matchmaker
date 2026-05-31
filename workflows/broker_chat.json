@@ -1,0 +1,418 @@
+{
+  "name": "broker_chat",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a real estate advisor agent\nUse RAG database to search for description match\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -416,
+        -64
+      ],
+      "id": "14b25da3-fcf1-488b-aa46-4688fbf528b1",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-3.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        272
+      ],
+      "id": "1218b6ac-5b9d-4da0-97ef-1b408313bb95",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "3vG6PuUEzOFRoZAB",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        160,
+        272
+      ],
+      "id": "d0504378-c81a-4713-bddb-c02262df42bc",
+      "name": "Embeddings Mistral Cloud",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "t5lAZbkpeL4HeLZs",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "_properties",
+          "mode": "list",
+          "cachedResultName": "_properties"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -240,
+        224
+      ],
+      "id": "fa9bd98c-c0fe-4d50-bc4c-03b2a2db0df0",
+      "name": "properties_structured_search ",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Agent must use a Vector Store Tool to find and recommend matching properties from the semantic catalogue based on a buyer’s described preferences",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        16,
+        64
+      ],
+      "id": "1b9165fc-37cb-4216-be83-6989fca16eaf",
+      "name": "Postgres PGVector Store",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('When chat message received').item.json.broker_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -416,
+        272
+      ],
+      "id": "d2760551-951d-463d-a16f-47305d22ec90",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1120,
+        -48
+      ],
+      "id": "8a74820e-2921-4430-9bd5-39d1d2dd0449",
+      "name": "When chat message received",
+      "webhookId": "9e73656b-20df-4042-b0a9-a681dcb16f99"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "_brokers",
+          "mode": "list",
+          "cachedResultName": "_brokers"
+        },
+        "returnAll": true,
+        "where": {
+          "values": [
+            {
+              "column": "broker_id",
+              "value": "={{ $json.broker_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -912,
+        -48
+      ],
+      "id": "32755062-2872-4531-be2b-807abe7db06e",
+      "name": "Select rows from a table",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b6f54a43-eeb6-48ab-8ac6-b377e1e29eb0",
+              "leftValue": "={{ $json.active }}",
+              "rightValue": "broker",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -704,
+        -48
+      ],
+      "id": "91aae39c-8f05-4a44-81ca-167fe26c13d6",
+      "name": "isBrokerActive"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "_inquiry_logs",
+          "mode": "list",
+          "cachedResultName": "_inquiry_logs"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        -128,
+        224
+      ],
+      "id": "0f9567f6-6c1b-4993-8fa3-904439d35ef1",
+      "name": "inquiry_logs",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## check if user id is broker one and active",
+        "height": 272,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -960,
+        -144
+      ],
+      "id": "81bc38e5-224e-4c37-a47b-415ed3a9e500",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## exam requested us to add MCP tool for supabse, but I prefer to add separate postgre tools for each table that we should access; relevant for structure data",
+        "height": 192,
+        "width": 368
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -304,
+        448
+      ],
+      "id": "91d7a2e0-4592-4af0-8432-9ace822d922a",
+      "name": "Sticky Note1"
+    }
+  ],
+  "pinData": {
+    "When chat message received": [
+      {
+        "json": {
+          "request_id": "chat_b3f745be-0cb6-4277-bc7f-84e0575fffcc",
+          "broker_id": "BRK-001",
+          "conversation_id": "property_management:BRK-001",
+          "chatInput": "office in sofia"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Mistral Cloud": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "properties_structured_search ": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Select rows from a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table": {
+      "main": [
+        [
+          {
+            "node": "isBrokerActive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "isBrokerActive": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "inquiry_logs": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "G0sjM3eBbk0u7j4t",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "dd55d72f-0c06-45cd-a28d-3e3a85bd78e6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0ddff7d21d0db94379d34b90ad9adbdbeeffaf85881bffb7496b19ad7281bf65"
+  },
+  "id": "rd7Z1Evjz9SJvWiC",
+  "tags": []
+}

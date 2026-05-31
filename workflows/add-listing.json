@@ -1,0 +1,820 @@
+{
+  "name": "add-listing",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "add-listing",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "image"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -928,
+        16
+      ],
+      "id": "975efc11-2bea-4495-ba8f-913994ae7654",
+      "name": "Webhook",
+      "webhookId": "48ab72fe-4ec0-4d32-8151-d763e3d4d179",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "aWDosJ7fhrnMRH0e",
+          "name": "expense-tracker Bearer"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1136,
+        -16
+      ],
+      "id": "2e00d2ae-850f-4eb8-bf88-cb1711c02e34",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "_brokers",
+          "mode": "list",
+          "cachedResultName": "_brokers"
+        },
+        "limit": 1,
+        "where": {
+          "values": [
+            {
+              "column": "broker_id",
+              "value": "={{ $('Webhook').item.json.body.broker_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -32,
+        16
+      ],
+      "id": "68f29a84-d1d0-49c1-8b06-86512e46d24d",
+      "name": "getBrokerByID",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fe1e6bc3-854d-4463-8976-b4f0cadc92bd",
+              "leftValue": "={{ $json.active }}",
+              "rightValue": "broker",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        192,
+        16
+      ],
+      "id": "246c6e60-193a-43d8-af9f-7feb2f1baeee",
+      "name": "isBrokerActive"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://jcezcsqbfogdpjaacidn.supabase.co/storage/v1/object/real_estate/{{ $json.image_id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-upsert",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "image0",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -496,
+        16
+      ],
+      "id": "bd73665d-8dc2-44d1-8b6d-a49e42ae395d",
+      "name": "upload_to_supabase",
+      "credentials": {
+        "supabaseApi": {
+          "id": "kRe7KGKHoQXhsPRi",
+          "name": "Supabase account"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1da3facb-43e0-4203-a8e9-607ce0096cf9",
+              "name": "image_url",
+              "value": "=https://jcezcsqbfogdpjaacidn.supabase.co/storage/v1/object/{{ $json.Key }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -256,
+        16
+      ],
+      "id": "79101a6b-0855-49f0-bd55-1d4b39f360e8",
+      "name": "generateImareURL"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dc8d566b-896c-4899-8903-a03bae60e01f",
+              "name": "image_id",
+              "value": "={{ $execution.id + \"-\" + $itemIndex + \"-\" + Date.now() + \"-\" + Math.floor(Math.random() * 1e9) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -704,
+        16
+      ],
+      "id": "0ec7e5f2-b12c-4d79-bd96-e1387fbd9cbd",
+      "name": "generate Unique Name of Image"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "64cb47fb-ac43-4901-b0eb-c21b026a1b53",
+              "name": "title",
+              "value": "={{ $('Webhook').item.json.body[\"property.title\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "7b0eb58d-9f63-4c83-be5f-1290b836a03d",
+              "name": "property_type",
+              "value": "={{ $('Webhook').item.json.body[\"property.property_type\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "df95aae7-e7d6-421e-8c68-dfdde4d2530e",
+              "name": "listing_type",
+              "value": "={{ $('Webhook').item.json.body[\"property.listing_type\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "63be6f00-c7c3-4dff-b7e4-0c1ee916e93c",
+              "name": "location",
+              "value": "={{ $('Webhook').item.json.body[\"property.location\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "c67f125d-5daa-4e40-b4a7-a66152d56b56",
+              "name": "price",
+              "value": "={{ $('Webhook').item.json.body[\"property.price\"] }}",
+              "type": "number"
+            },
+            {
+              "id": "85479840-92e9-4818-843c-98a6af318f9e",
+              "name": "currency",
+              "value": "={{ $('Webhook').item.json.body[\"property.currency\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "4c8dd25a-cff9-4db1-a19e-ecfa16bb7887",
+              "name": "description",
+              "value": "={{ $('Webhook').item.json.body[\"property.description\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "cef44668-f415-46c3-9fa9-b19e47075c38",
+              "name": "broker_id",
+              "value": "={{ $('Webhook').item.json.body.broker_id }}",
+              "type": "string"
+            },
+            {
+              "id": "d875f677-4a74-4c0f-902a-aa1f9cfb8187",
+              "name": "image_url",
+              "value": "={{ $('generateImareURL').item.json.image_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        432,
+        0
+      ],
+      "id": "cff1ab45-f947-488c-92ea-43aec71a4e86",
+      "name": "structure Listing Data"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "_properties",
+          "mode": "list",
+          "cachedResultName": "_properties"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "price": "={{ $json.price }}",
+            "title": "={{ $json.title }}",
+            "property_type": "={{ $json.property_type }}",
+            "listing_type": "={{ $json.listing_type }}",
+            "location": "={{ $json.location }}",
+            "description": "={{ $json.description }}",
+            "image_url": "={{ $json.image_url }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_type",
+              "displayName": "property_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "listing_type",
+              "displayName": "listing_type",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "location",
+              "displayName": "location",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "price",
+              "displayName": "price",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "image_url",
+              "displayName": "image_url",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "updated_at",
+              "displayName": "updated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        640,
+        0
+      ],
+      "id": "d281309b-f608-4029-bd25-38f1955d110a",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "fxjh6OZclJx355tm",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/fxjh6OZclJx355tm",
+          "cachedResultName": "rag-listing-update"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        -256
+      ],
+      "id": "bd08b937-3e98-4a2e-81d9-7f617e6ea743",
+      "name": "Call 'rag-listing-update'"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": false,\n  \"request_id\": \"listing_3f8d7b90-2d3f-4bb8-9a7b-7a1e2b9d6f10\",\n  \"error\": {\n    \"code\": \"WEBHOOK_REQUEST_FAILED\",\n    \"message\": \"Human-readable error message\",\n    \"retryable\": true\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        880,
+        256
+      ],
+      "id": "3d8189a9-4af5-4de7-b10c-182c9ce197f4",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54ab2939-2894-4d15-9376-adc04a9ee7b8",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "f759b9f3-f164-4406-8a10-f7eddce27ee3",
+              "name": "listing.id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "2f071b52-e2a6-4f19-b4a5-caa858447273",
+              "name": "listing.title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "a6604cb4-8415-4865-96a0-8c2699a90d19",
+              "name": "listing.property_type",
+              "value": "={{ $json.property_type }}",
+              "type": "string"
+            },
+            {
+              "id": "3cf35fdc-96d6-47b9-afe8-150503ea22f1",
+              "name": "listing.listing_type",
+              "value": "={{ $json.listing_type }}",
+              "type": "string"
+            },
+            {
+              "id": "85120ede-47fd-4f0c-ad3d-5bb87fa461ac",
+              "name": "listing.location",
+              "value": "={{ $json.location }}",
+              "type": "string"
+            },
+            {
+              "id": "d10ab383-f7ba-4140-a2d4-a2371f8aa326",
+              "name": "listing.price",
+              "value": "={{ $json.price }}",
+              "type": "string"
+            },
+            {
+              "id": "c70f7550-2d10-4eb7-9c04-71938a71b3aa",
+              "name": "listing.description",
+              "value": "={{ $json.description }}",
+              "type": "string"
+            },
+            {
+              "id": "53bb84b3-f507-47aa-8f5b-201b23776782",
+              "name": "listing.image_url",
+              "value": "={{ $json.image_url }}",
+              "type": "string"
+            },
+            {
+              "id": "16b05053-971c-44f2-8186-80b96992ef95",
+              "name": "listing.status",
+              "value": "created",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        880,
+        -16
+      ],
+      "id": "ae796094-6da7-4d0e-8708-f1eabf45972d",
+      "name": "organizeResponse"
+    },
+    {
+      "parameters": {
+        "content": "## Supabase bucket upload with unique name",
+        "height": 384,
+        "width": 592
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -736,
+        -96
+      ],
+      "id": "47b48837-43ab-4fd2-98fd-97d6d597d24e",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": false,\n  \"request_id\": \"listing_3f8d7b90-2d3f-4bb8-9a7b-7a1e2b9d6f10\",\n  \"error\": {\n    \"code\": \"WEBHOOK_REQUEST_FAILED\",\n    \"message\": \"Human-readable error message\",\n    \"retryable\": true\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -192,
+        352
+      ],
+      "id": "a3f210a1-9a15-46d2-96c3-1be88d82c0d5",
+      "name": "Respond to Webhook2"
+    },
+    {
+      "parameters": {
+        "content": "## Validate broker account",
+        "height": 336,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        -96
+      ],
+      "id": "b6eb512d-aeed-4ab3-82c4-a9be46abb784",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": false,\n  \"request_id\": \"listing_3f8d7b90-2d3f-4bb8-9a7b-7a1e2b9d6f10\",\n  \"error\": {\n    \"code\": \"WEBHOOK_REQUEST_FAILED\",\n    \"message\": \"Human-readable error message\",\n    \"retryable\": true\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        400,
+        320
+      ],
+      "id": "42a34820-2c7d-4655-9497-a2e008b2a8ff",
+      "name": "Respond to Webhook3"
+    },
+    {
+      "parameters": {
+        "content": "## Run RAG update (full) ",
+        "height": 256,
+        "width": 464
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        752,
+        -352
+      ],
+      "id": "72097ca3-efbe-4137-bf8a-702ad8c06c64",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "connection": "upgrade",
+            "host": "n8n.alm-expert.com",
+            "x-forwarded-for": "95.42.32.223",
+            "x-forwarded-proto": "https",
+            "content-length": "208917",
+            "authorization": {
+              "__redacted": true,
+              "reason": "node_defined_field",
+              "canReveal": false
+            },
+            "content-type": "multipart/form-data; boundary=----formdata-undici-045743015689",
+            "accept": "*/*",
+            "accept-language": "*",
+            "sec-fetch-mode": "cors",
+            "user-agent": "node",
+            "pragma": "no-cache",
+            "cache-control": "no-cache",
+            "accept-encoding": "br, gzip, deflate"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "meta.schema_version": "1.0",
+            "meta.request_id": "listing_e08781a9-6c8d-4413-b32b-21d1ba77e645",
+            "meta.sent_at": "2026-05-31T08:56:58.780Z",
+            "meta.source": "app",
+            "role": "broker",
+            "broker_id": "BRK-001",
+            "property.title": "2 bed room",
+            "property.property_type": "apartment",
+            "property.listing_type": "for_sale",
+            "property.location": "sofia",
+            "property.price": "100000",
+            "property.currency": "EUR",
+            "property.description": "Bright two-bedroom with a renovated kitchen, oak flooring, a large south-facing balcony, and a separate storage room. Quiet street, close to parks and metro.",
+            "image.filename": "bangaranga.jpg",
+            "image.mime_type": "image/jpeg",
+            "source_context.submitted_by_user_id": "BRK-001",
+            "source_context.submitted_by_role": "broker",
+            "source_context.client_time_zone": "Europe/Sofia"
+          },
+          "webhookUrl": "https://n8n.alm-expert.com/webhook/add-listing",
+          "executionMode": "production"
+        },
+        "binary": {
+          "image0": {
+            "mimeType": "image/jpeg",
+            "fileType": "image",
+            "fileExtension": "jpg",
+            "data": "filesystem-v2",
+            "fileName": "bangaranga.jpg",
+            "id": "filesystem-v2:workflows/mx5nJTP4SrMbklYQ/executions/1690/binary_data/8b43d36e-5314-4d06-8957-aef00453cfaa",
+            "fileSize": "207 kB",
+            "bytes": 206626
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "generate Unique Name of Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "getBrokerByID": {
+      "main": [
+        [
+          {
+            "node": "isBrokerActive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "isBrokerActive": {
+      "main": [
+        [
+          {
+            "node": "structure Listing Data",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "upload_to_supabase": {
+      "main": [
+        [
+          {
+            "node": "generateImareURL",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generate Unique Name of Image": {
+      "main": [
+        [
+          {
+            "node": "upload_to_supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "structure Listing Data": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "generateImareURL": {
+      "main": [
+        [
+          {
+            "node": "getBrokerByID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Call 'rag-listing-update'",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "organizeResponse",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "organizeResponse": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "G0sjM3eBbk0u7j4t",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "c196923c-fcd8-45a1-b72b-172839b9552e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0ddff7d21d0db94379d34b90ad9adbdbeeffaf85881bffb7496b19ad7281bf65"
+  },
+  "id": "mx5nJTP4SrMbklYQ",
+  "tags": []
+}

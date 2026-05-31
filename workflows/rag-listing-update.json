@@ -1,0 +1,303 @@
+{
+  "name": "rag-listing-update",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -528,
+        16
+      ],
+      "id": "db73350a-f376-4e93-897c-feb17415c92d",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        -224
+      ],
+      "id": "e02d8e69-8395-4875-9018-e4f7b5341a0f",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "_rag_real_estate_mistral_1024_db_swap",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        -112
+      ],
+      "id": "7fd45283-9ff0-42c1-9a10-998724ca0b4c",
+      "name": "PG Vector Store",
+      "alwaysOutputData": false,
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "BEGIN;\nDO $$\nBEGIN\n  EXECUTE format(\n    'ALTER TABLE _rag_real_estate_mistral_1024_db RENAME TO %I',\n    '_archive_rag_real_estate_mistral_1024_db_' || to_char(current_timestamp, 'YYYYMMDD_HH24MI')\n  );\nEND;\n$$;\n\nALTER TABLE _rag_real_estate_mistral_1024_db_swap RENAME TO _rag_real_estate_mistral_1024_db;\nCREATE TABLE _rag_real_estate_mistral_1024_db_swap (\n    id SERIAL PRIMARY KEY,\n    text TEXT NOT NULL,\n    metadata JSONB,\n    created_at TIMESTAMP DEFAULT NOW(),\n    embedding VECTOR(1024)\n);\nCOMMIT;\n\n-- 1. Enable Row Level Security\nALTER TABLE _rag_real_estate_mistral_1024_db_swap ENABLE ROW LEVEL SECURITY;\n\n-- 2. Create a policy to allow anyone to read the embeddings (Public Read)\nCREATE POLICY \"Allow public read access\" \nON _rag_real_estate_mistral_1024_db_swap \nFOR SELECT \nUSING (true);\n\n-- 3. Create a policy to allow only authenticated users to insert/update data\nCREATE POLICY \"Allow authenticated inserts\" \nON _rag_real_estate_mistral_1024_db_swap \nFOR INSERT \nTO authenticated \nWITH CHECK (true);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        976,
+        -112
+      ],
+      "id": "9edd774f-d6bc-4693-8589-0fc0a6c73fb4",
+      "name": "Update & Archive RAG table",
+      "executeOnce": false,
+      "retryOnFail": false,
+      "alwaysOutputData": false,
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        768,
+        -112
+      ],
+      "id": "28e8c9e6-40b5-4bf5-a953-98d178e933ab",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        240,
+        96
+      ],
+      "id": "bb606f32-f5d1-4f56-bbf0-285590972bba",
+      "name": "Embeddings Mistral Cloud1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "t5lAZbkpeL4HeLZs",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "=Description: {{ $json.description }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "id",
+                "value": "={{ $json.id }}"
+              },
+              {
+                "name": "price",
+                "value": "={{ $json.price }}"
+              },
+              {
+                "name": "listing_type",
+                "value": "={{ $json.listing_type }}"
+              },
+              {
+                "name": "location",
+                "value": "={{ $json.location }}"
+              },
+              {
+                "name": "property_type",
+                "value": "={{ $json.property_type }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        112
+      ],
+      "id": "214cb6ae-b6f5-48b9-a0da-9b5fe53ea7a7",
+      "name": "Default Data Loader1"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [
+        480,
+        288
+      ],
+      "id": "1f9665e9-b18c-4a99-8cbb-42f4d382f6e9",
+      "name": "Token Splitter"
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "_properties",
+          "mode": "list",
+          "cachedResultName": "_properties"
+        },
+        "returnAll": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -16,
+        -112
+      ],
+      "id": "19bcb7e0-c410-4742-9004-976a81acb215",
+      "name": "Select rows from a table",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Select rows from a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Select rows from a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PG Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Update & Archive RAG table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Mistral Cloud1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "PG Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader1": {
+      "ai_document": [
+        [
+          {
+            "node": "PG Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader1",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table": {
+      "main": [
+        [
+          {
+            "node": "PG Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "b0xEhniMg5HZs52c",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "527295b5-b284-4474-8fe7-a1a3f927c8c0",
+  "meta": {
+    "instanceId": "0ddff7d21d0db94379d34b90ad9adbdbeeffaf85881bffb7496b19ad7281bf65"
+  },
+  "id": "fxjh6OZclJx355tm",
+  "tags": []
+}

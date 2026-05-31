@@ -1,0 +1,621 @@
+{
+  "name": "real-estate-advisor",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "mode": "webhook",
+        "options": {
+          "responseMode": "responseNode"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -816,
+        -368
+      ],
+      "id": "abd8a63a-7520-4e7c-b8a3-7cc65a29494a",
+      "name": "When chat message received",
+      "webhookId": "45d35f2c-03e3-4b33-89aa-e9b8aca7e523"
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a real estate advisor agent\nUse RAG database to search for description match\n\nIf no match is found, respond with match = false.\n\nResponse in JSON only."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        16,
+        -368
+      ],
+      "id": "95518733-470c-4ac8-84bc-78af1e39d553",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-3.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        -96
+      ],
+      "id": "3be94922-940c-44f8-933e-650c892f650a",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "3vG6PuUEzOFRoZAB",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        416,
+        -16
+      ],
+      "id": "a859c318-3565-4d88-ac30-173760d2c2d7",
+      "name": "Embeddings Mistral Cloud",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "t5lAZbkpeL4HeLZs",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "_properties",
+          "mode": "list",
+          "cachedResultName": "_properties"
+        },
+        "returnAll": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Return_All', ``, 'boolean') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgresTool",
+      "typeVersion": 2.6,
+      "position": [
+        128,
+        -96
+      ],
+      "id": "1f715ee5-f88d-461a-af4c-5f99de03cd57",
+      "name": "properties_structured_search ",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Agent must use a Vector Store Tool to find and recommend matching properties from the semantic catalogue based on a buyer’s described preferences",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.3,
+      "position": [
+        400,
+        -192
+      ],
+      "id": "3d44e211-48e6-437d-b347-2063e7ae36d9",
+      "name": "Postgres PGVector Store",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.user_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        -96
+      ],
+      "id": "b3e2a370-3fc6-483b-83f4-5bc6c544cf1b",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n\t\"match\": true,\n     \"matched_properties_id\": [\"P-000104\",\"P-000105\"],\n\t \"matched_properties\": [\n      {\n        \"id\": \"P-000104\",\n        \"title\": \"Sunny 2BR in Lozenets\",\n        \"property_type\": \"apartment\",\n        \"listing_type\": \"for_rent\",\n        \"location\": \"Sofia, Lozenets\",\n        \"price\": 1500,\n        \"description\": \"Fully furnished, near metro.\",\n        \"image_url\": \"https://example.com/p1.jpg\",\n        \"score\": 0.94\n      },\n      {\n        \"id\": \"P-000105\",\n        \"title\": \"Modern 2BR in Iztok\",\n        \"property_type\": \"apartment\",\n        \"listing_type\": \"for_rent\",\n        \"location\": \"Sofia, Iztok\",\n        \"price\": 1700,\n        \"description\": \"New building, parking included.\",\n        \"image_url\": \"https://example.com/p2.jpg\",\n        \"score\": 0.9\n      }\n    ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        256,
+        -144
+      ],
+      "id": "149590f5-6815-4fb0-8830-e6dd4cc1b94f",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "976bf476-1612-49d0-9d03-f9ca791e07fd",
+              "leftValue": "={{ $json.output.match }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        -464
+      ],
+      "id": "edc93a5d-62af-46ac-b820-c3e61c769416",
+      "name": "isMatchFound"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0ca376f3-cb85-41cb-ae17-551c74dbaa0e",
+              "name": "chatInput",
+              "value": "={{ $('When chat message received').item.json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "ea3882da-f592-455e-8a61-9866e04448ba",
+              "name": "matched_properties_ids",
+              "value": "={{ $json.output.matched_properties_id }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        -608
+      ],
+      "id": "52beab0e-00b2-4d10-b012-e93997c175f4",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "_inquiry_logs",
+          "mode": "list",
+          "cachedResultName": "_inquiry_logs"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "matched_property_ids": "={{ $json.matched_properties_ids }}",
+            "buyer_query": "={{ $json.chatInput }} aaaa"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "buyer_query",
+              "displayName": "buyer_query",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "matched_property_ids",
+              "displayName": "matched_property_ids",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "array",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1104,
+        -608
+      ],
+      "id": "fbf70e77-d43d-482b-9da0-c6d4773a741f",
+      "name": "Insert in inquiry_logs",
+      "credentials": {
+        "postgres": {
+          "id": "AgWL24cTVhCCQn6i",
+          "name": "supabase - tic-tac-toe"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        832,
+        -192
+      ],
+      "id": "2a3612a4-fb5f-47f5-b823-5ffe50925f4a",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        848,
+        -400
+      ],
+      "id": "76f25e8b-b810-4523-9d5e-51fbb848de0c",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.chatInput }}",
+        "guardrails": {
+          "jailbreak": {
+            "value": {
+              "threshold": 0.7
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.guardrails",
+      "typeVersion": 2,
+      "position": [
+        -384,
+        -384
+      ],
+      "id": "ecec02ac-11dc-411b-a435-e123c433cae8",
+      "name": "Guardrails"
+    },
+    {
+      "parameters": {
+        "model": "google/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        -160
+      ],
+      "id": "17b1146e-1b78-4e7f-8cf7-a4e6f40b6ad0",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "3vG6PuUEzOFRoZAB",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## populate inquiry_logs",
+        "height": 272,
+        "width": 528
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        768,
+        -720
+      ],
+      "id": "fd377035-0366-46b7-83b5-760f993c597b",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## check if match is found ",
+        "height": 368
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -640
+      ],
+      "id": "08abf5fc-8ad8-4598-b4cd-7d36993c7b13",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## checks only for client role",
+        "height": 336,
+        "width": 192
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        -512
+      ],
+      "id": "230191fc-6ab2-4b26-bc76-93a44b011aab",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b6f54a43-eeb6-48ab-8ac6-b377e1e29eb0",
+              "leftValue": "={{ $json.role }}",
+              "rightValue": "client",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -624,
+        -368
+      ],
+      "id": "19d58e49-d305-418d-b674-0cecf6a26e97",
+      "name": "isClient"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "isClient",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "isMatchFound",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Mistral Cloud": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "properties_structured_search ": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "isMatchFound": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Insert in inquiry_logs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardrails": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Guardrails",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "isClient": {
+      "main": [
+        [
+          {
+            "node": "Guardrails",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "G0sjM3eBbk0u7j4t",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "5f300b5c-ec9d-45c9-a19a-30046adb4c85",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0ddff7d21d0db94379d34b90ad9adbdbeeffaf85881bffb7496b19ad7281bf65"
+  },
+  "id": "3xS8vD74uT8lk9Gi",
+  "tags": []
+}
