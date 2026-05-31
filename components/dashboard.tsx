@@ -9,6 +9,8 @@ import type {
   AddListingRequest,
   AddListingResponse,
   ApiFailureResponse,
+  BrokerChatRequest,
+  BrokerChatResponse,
   ChatMatchedProperty,
   ChatRequest,
   ChatResponse,
@@ -403,40 +405,55 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
 
     setMessages((current) => [...current, userMessage]);
 
-    const request: ChatRequest = {
-      meta: {
-        schema_version: '1.0',
-        request_id: createId('chat'),
-        sent_at: new Date().toISOString(),
-        source: 'app'
-      },
-      role,
-      user_id: activeUserId,
-      conversation_id: `${view}:${activeUserId}`,
-      message: prompt,
-      context: {
-        current_view: view,
-        selected_property_ids: [],
-        recent_property_ids: properties.slice(0, 3).map((property) => property.id)
-      }
-    };
+    const requestId = createId('chat');
+    const conversationId = `${view}:${activeUserId}`;
+    const endpoint = role === 'broker' ? '/api/webhooks/chat/broker' : '/api/webhooks/chat';
+    const requestPayload: ChatRequest | BrokerChatRequest =
+      role === 'broker'
+        ? {
+            request_id: requestId,
+            broker_id: brokerIdentifier || activeUserId,
+            conversation_id: conversationId,
+            chatInput: prompt
+          }
+        : {
+            meta: {
+              schema_version: '1.0',
+              request_id: requestId,
+              sent_at: new Date().toISOString(),
+              source: 'app'
+            },
+            role,
+            user_id: activeUserId,
+            conversation_id: conversationId,
+            message: prompt,
+            context: {
+              current_view: view,
+              selected_property_ids: [],
+              recent_property_ids: properties.slice(0, 3).map((property) => property.id)
+            }
+          };
 
     role === 'broker' ? setBrokerBusy(true) : setBuyerBusy(true);
 
     try {
-      const response = await fetch('/api/webhooks/chat', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(request)
+        body: JSON.stringify(requestPayload)
       });
 
-      const payload = (await response.json()) as ChatResponse | ApiFailureResponse;
+      const payload = (await response.json()) as ChatResponse | BrokerChatResponse | ApiFailureResponse;
 
       if (!response.ok || !payload.ok) {
         throw new Error('The assistant could not respond.');
       }
+
+      const matchedProperties = 'matched_properties' in payload && Array.isArray(payload.matched_properties)
+        ? payload.matched_properties
+        : undefined;
 
       const assistantMessage: MessageItem = {
         id: createId('message'),
@@ -444,7 +461,7 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
         badge: role === 'broker' ? 'Real Estate Advisor' : 'Buyer Assistant',
         text: payload.message,
         time: new Date().toISOString(),
-        matchedProperties: payload.matched_properties
+        matchedProperties
       };
 
       setMessages((current) => [...current, assistantMessage]);

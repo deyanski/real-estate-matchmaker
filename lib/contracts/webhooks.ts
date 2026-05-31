@@ -145,6 +145,21 @@ export interface ChatResponse {
   summary?: string;
 }
 
+export interface BrokerChatRequest {
+  request_id: string;
+  broker_id: string;
+  conversation_id: string;
+  chatInput: string;
+}
+
+export interface BrokerChatResponse {
+  ok: true;
+  request_id: string;
+  role: 'broker';
+  message: string;
+  source: 'n8n';
+}
+
 export interface ApiFailureResponse {
   ok: false;
   request_id: string;
