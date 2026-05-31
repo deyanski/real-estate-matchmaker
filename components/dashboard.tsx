@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
 
 import type {
   AddListingRequest,
@@ -204,6 +204,124 @@ function PropertyCard({ property }: { property: PropertyRecord }) {
   );
 }
 
+function renderInlineMarkdown(text: string): ReactNode[] {
+  const tokenPattern = /!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)|\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|\*\*([^*]+)\*\*|`([^`]+)`/g;
+  const nodes: ReactNode[] = [];
+  let lastIndex = 0;
+  let tokenIndex = 0;
+
+  for (const match of text.matchAll(tokenPattern)) {
+    const [fullMatch, imageAlt, imageUrl, linkText, linkUrl, boldText, codeText] = match;
+    const start = match.index ?? 0;
+
+    if (start > lastIndex) {
+      nodes.push(text.slice(lastIndex, start));
+    }
+
+    if (imageUrl) {
+      nodes.push(
+        <a
+          key={`img-link-${tokenIndex}`}
+          className="chat-link"
+          href={imageUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          {imageAlt || 'Open image'}
+        </a>
+      );
+    } else if (linkUrl) {
+      nodes.push(
+        <a
+          key={`link-${tokenIndex}`}
+          className="chat-link"
+          href={linkUrl}
+          target="_blank"
+          rel="noreferrer noopener"
+        >
+          {linkText}
+        </a>
+      );
+    } else if (boldText) {
+      nodes.push(
+        <strong key={`bold-${tokenIndex}`}>{boldText}</strong>
+      );
+    } else if (codeText) {
+      nodes.push(
+        <code key={`code-${tokenIndex}`}>{codeText}</code>
+      );
+    } else {
+      nodes.push(fullMatch);
+    }
+
+    lastIndex = start + fullMatch.length;
+    tokenIndex += 1;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes.length > 0 ? nodes : [text];
+}
+
+function renderRichChatText(text: string): ReactNode {
+  const lines = text.split(/\r?\n/);
+  const blocks: ReactNode[] = [];
+  let index = 0;
+
+  while (index < lines.length) {
+    const rawLine = lines[index];
+    const trimmed = rawLine.trim();
+
+    if (!trimmed) {
+      index += 1;
+      continue;
+    }
+
+    const headingMatch = trimmed.match(/^#{1,6}\s+(.+)$/);
+    if (headingMatch) {
+      blocks.push(
+        <p className="chat-heading" key={`heading-${index}`}>
+          {renderInlineMarkdown(headingMatch[1])}
+        </p>
+      );
+      index += 1;
+      continue;
+    }
+
+    if (trimmed.startsWith('* ')) {
+      const items: ReactNode[] = [];
+
+      while (index < lines.length) {
+        const listLine = lines[index].trim();
+        if (!listLine.startsWith('* ')) {
+          break;
+        }
+
+        items.push(
+          <li key={`li-${index}`}>{renderInlineMarkdown(listLine.slice(2).trim())}</li>
+        );
+        index += 1;
+      }
+
+      blocks.push(
+        <ul className="chat-list" key={`list-${index}`}>
+          {items}
+        </ul>
+      );
+      continue;
+    }
+
+    blocks.push(
+      <p key={`p-${index}`}>{renderInlineMarkdown(rawLine)}</p>
+    );
+    index += 1;
+  }
+
+  return <div className="chat-rich-text">{blocks}</div>;
+}
+
 function ChatBubble({ message }: { message: MessageItem }) {
   return (
     <article className={`chat-message ${message.role === 'user' ? 'is-user' : 'is-assistant'}`}>
@@ -211,7 +329,9 @@ function ChatBubble({ message }: { message: MessageItem }) {
         <span>{message.role === 'user' ? 'You' : message.badge ?? 'Advisor'}</span>
         <span>{formatTime(message.time)}</span>
       </div>
-      <p className="chat-text">{message.text}</p>
+      <div className="chat-text">
+        {message.role === 'assistant' ? renderRichChatText(message.text) : <p>{message.text}</p>}
+      </div>
       {message.matchedProperties && message.matchedProperties.length > 0 ? (
         <ol className="result-list result-list--numbered">
           {message.matchedProperties.map((property, index) => (

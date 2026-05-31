@@ -633,6 +633,36 @@ img {
   white-space: pre-wrap;
 }
 
+.chat-text p {
+  margin: 0;
+}
+
+.chat-rich-text {
+  display: grid;
+  gap: 8px;
+}
+
+.chat-heading {
+  font-weight: 700;
+}
+
+.chat-list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.chat-link {
+  color: var(--accent-2);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.chat-link:hover {
+  color: var(--text);
+}
+
 .message-card {
   padding: 14px;
 }
