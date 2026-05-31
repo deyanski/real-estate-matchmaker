@@ -263,15 +263,7 @@ export default function Dashboard({ initialProperties, mode = 'all', initialErro
   const [brokerQuery, setBrokerQuery] = useState('How many inquiries did we get this week?');
   const [buyerQuery, setBuyerQuery] = useState('Recommend something quiet and close to a metro under 100,000 EUR.');
   const [brokerMessages, setBrokerMessages] = useState<MessageItem[]>([]);
-  const [buyerMessages, setBuyerMessages] = useState<MessageItem[]>([
-    {
-      id: createId('message'),
-      role: 'assistant',
-      badge: 'Buyer Assistant',
-      text: 'Ask in plain language. The search box will rank properties by meaning and features.',
-      time: new Date().toISOString()
-    }
-  ]);
+  const [buyerMessages, setBuyerMessages] = useState<MessageItem[]>([]);
   const [brokerBusy, setBrokerBusy] = useState(false);
   const [buyerBusy, setBuyerBusy] = useState(false);
 
